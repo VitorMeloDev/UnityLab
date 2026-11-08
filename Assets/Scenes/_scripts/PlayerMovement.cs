@@ -1,4 +1,5 @@
 using UnityEngine;
+using FMOD.Studio;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -9,12 +10,18 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D  rb;
     private Actions input;
-    private Vector2 movement;
+    public Vector2 movement;
+    private EventInstance playerFootsteps;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         input = new Actions();
+    }
+
+    void Start()
+    {
+        playerFootsteps = AudioManager.instance.CreateEventInstance(FMODEvents.instance.playerFootsteps);
     }
 
     private void OnEnable()
@@ -32,8 +39,22 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector2 direction = new Vector2(movement.x, movement.y);
         rb.linearVelocityX = movement.x * speed;
+
+        
+        if (rb.linearVelocityX != 0f)
+        {
+            PLAYBACK_STATE playbackState;
+            playerFootsteps.getPlaybackState(out playbackState);
+            if (playbackState != PLAYBACK_STATE.PLAYING)
+            {
+                playerFootsteps.start();
+            }
+        }
+        else
+        {
+            playerFootsteps.stop(STOP_MODE.ALLOWFADEOUT);
+        }
     }
 
     private void Jump()
